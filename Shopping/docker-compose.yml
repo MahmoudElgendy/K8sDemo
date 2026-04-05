@@ -1,0 +1,13 @@
+services:
+  shopping.api:
+    build:
+      context: .
+      dockerfile: Shopping.API/Dockerfile
+
+  shopping.client:
+    build:
+      context: .
+      dockerfile: Shopping.Client/Dockerfile
+
+  shopping.db:
+    image: mongo
