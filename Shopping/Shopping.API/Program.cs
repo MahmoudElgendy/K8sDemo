@@ -1,4 +1,6 @@
 
+using Shopping.API.Data;
+
 namespace Shopping.API
 {
     public class Program
@@ -13,6 +15,7 @@ namespace Shopping.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped<ProductContext>();
 
             var app = builder.Build();
 

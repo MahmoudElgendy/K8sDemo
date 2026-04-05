@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Shopping.Client.Data;
 using Shopping.Client.Models;
 using System.Diagnostics;
@@ -20,11 +21,9 @@ namespace Shopping.Client.Controllers
         {
             var response = await _httpClient.GetAsync("/product");
             var content = await response.Content.ReadAsStringAsync();
-            var products = System.Text.Json.JsonSerializer.Deserialize<List<Product>>(content, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            return View(products);
+            var productList = JsonConvert.DeserializeObject<IEnumerable<Product>>(content);
+
+            return View(productList);
         }
 
         public IActionResult Privacy()
