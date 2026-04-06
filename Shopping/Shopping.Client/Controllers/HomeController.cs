@@ -19,7 +19,7 @@ namespace Shopping.Client.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var response = await _httpClient.GetAsync("/product");
+            var response = await _httpClient.GetAsync("product");
             var content = await response.Content.ReadAsStringAsync();
             var productList = JsonConvert.DeserializeObject<IEnumerable<Product>>(content);
 

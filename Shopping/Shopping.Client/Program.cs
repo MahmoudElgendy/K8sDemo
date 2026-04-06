@@ -10,7 +10,7 @@ namespace Shopping.Client
             builder.Services.AddControllersWithViews();
             builder.Services.AddHttpClient("ShoppingAPI", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5002/Product/");
+                client.BaseAddress = new Uri("http://shopping.api");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
 

@@ -7,7 +7,7 @@ namespace Shopping.API.Data
     {
         public ProductContext(IConfiguration configuration)
         {
-            var client = new MongoClient(configuration["DatabaseSettings:ConnectionString"]);
+            var client = new MongoClient("mongodb://shopping.db:27017");
             var database = client.GetDatabase(configuration["DatabaseSettings:DatabaseName"]);
 
             Products = database.GetCollection<Product>(configuration["DatabaseSettings:CollectionName"]);

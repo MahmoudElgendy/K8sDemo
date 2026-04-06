@@ -1,13 +1,30 @@
 services:
   shopping.api:
+    container_name: shopping.api
     build:
-      context: .
-      dockerfile: Shopping.API/Dockerfile
+      context: ./Shopping.API
+      dockerfile: Dockerfile
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - shopping.db 
 
   shopping.client:
+    container_name: shopping.client  
     build:
-      context: .
-      dockerfile: Shopping.Client/Dockerfile
-
+      context: ./Shopping.Client
+      dockerfile: Dockerfile
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=Development
+    
   shopping.db:
+    container_name: shopping.db
     image: mongo
+    ports:
+      - "27017:27017"
