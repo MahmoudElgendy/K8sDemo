@@ -1,17 +1,15 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace Shopping.API.Models
+﻿namespace Shopping.API.Models
 {
     public class Product
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public ObjectId Id { get; set; }
-        public string Name { get; set; }
-        public string Category { get; set; }
-        public string Description { get; set; }
-        public string ImageFile { get; set; }
+
+        public int Id { get; set; }
+
+        public required string Name { get; set; }
+        public required string Category { get; set; }
+        public required string Description { get; set; }
+        public required string ImageFile { get; set; }
+
         public decimal Price { get; set; }
 
     }
