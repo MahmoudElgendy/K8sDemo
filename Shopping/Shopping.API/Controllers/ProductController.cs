@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 using Shopping.API.Data;
 using Shopping.API.Models;
 
@@ -23,26 +21,15 @@ namespace Shopping.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> Get()
         {
-            var products = await _context.Products.Find(_ => true).ToListAsync();
-
-            var result = products.Select(p => new ProductDto
-            {
-                Id = p.Id.ToString(),
-                Name= p.Name,
-                Category=p.Category,
-                Description =p.Description,
-                ImageFile =p.ImageFile,
-                Price = p.Price
-                
-            });
-            return Ok(result);
+            var products = await _context.Products.ToListAsync();
+            return Ok(products);
         }
 
-      
+
     }
     public class ProductDto
     {
-       
+
         public string Id { get; set; }
         public string Name { get; set; }
         public string Category { get; set; }
