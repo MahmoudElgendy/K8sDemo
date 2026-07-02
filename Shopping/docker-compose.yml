@@ -7,7 +7,6 @@ services:
     ports:
       - "5002:80"
     environment:
-      ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ShoppingDb;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;Encrypt=False;"
     depends_on:
@@ -22,7 +21,6 @@ services:
     ports:
       - "5001:80"
     environment:
-      ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
 
   sqlserver:
