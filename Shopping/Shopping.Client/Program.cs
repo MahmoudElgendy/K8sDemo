@@ -8,9 +8,13 @@ namespace Shopping.Client
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ??
+             throw new InvalidOperationException("ApiSettings:BaseUrl is missing.");
+
             builder.Services.AddHttpClient("ShoppingAPI", client =>
             {
-                client.BaseAddress = new Uri("http://shopping.api");
+                client.BaseAddress = new Uri(apiBaseUrl);
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
 
