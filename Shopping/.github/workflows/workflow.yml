@@ -1,0 +1,268 @@
+name: Shopping App CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  # Allows you to run the workflow manually from GitHub.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  DOTNET_VERSION: "10.0.x"
+
+  RESOURCE_GROUP: "geeks-rg"
+
+  ACR_NAME: "geekscr"
+  ACR_LOGIN_SERVER: "geekscr.azurecr.io"
+
+  API_IMAGE_NAME: "shoppingapi"
+  CLIENT_IMAGE_NAME: "shoppingclient"
+
+  API_WEB_APP_NAME: "geeks-shopping-api"
+  CLIENT_WEB_APP_NAME: "geeks-shopping-client"
+
+jobs:
+  # =====================================================
+  # CI - Build Shopping.API
+  # =====================================================
+  build-api:
+    name: Build Shopping API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Display .NET information
+        run: dotnet --info
+
+      - name: Restore Shopping API
+        run: dotnet restore Shopping.API/Shopping.API.csproj
+
+      - name: Build Shopping API
+        run: |
+          dotnet build Shopping.API/Shopping.API.csproj \
+            --configuration Release \
+            --no-restore
+
+  # =====================================================
+  # CI - Build Shopping.Client
+  # =====================================================
+  build-client:
+    name: Build Shopping Client
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Display .NET information
+        run: dotnet --info
+
+      - name: Restore Shopping Client
+        run: dotnet restore Shopping.Client/Shopping.Client.csproj
+
+      - name: Build Shopping Client
+        run: |
+          dotnet build Shopping.Client/Shopping.Client.csproj \
+            --configuration Release \
+            --no-restore
+
+  # =====================================================
+  # Tests
+  #
+  # Uncomment and modify this job when you have test
+  # projects in your repository.
+  # =====================================================
+  #
+  # run-tests:
+  #   name: Run Automated Tests
+  #   runs-on: ubuntu-latest
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up .NET 10
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: ${{ env.DOTNET_VERSION }}
+  #
+  #     - name: Restore solution
+  #       run: dotnet restore Shopping.sln
+  #
+  #     - name: Build solution
+  #       run: |
+  #         dotnet build Shopping.sln \
+  #           --configuration Release \
+  #           --no-restore
+  #
+  #     - name: Run tests
+  #       run: |
+  #         dotnet test Shopping.sln \
+  #           --configuration Release \
+  #           --no-build \
+  #           --verbosity normal
+
+  # =====================================================
+  # CD - Build and deploy Shopping.API
+  # =====================================================
+  deploy-api:
+    name: Deploy Shopping API
+    runs-on: ubuntu-latest
+
+    needs:
+      - build-api
+      - build-client
+
+    # Pull requests run CI only.
+    # Deployment happens only after a push to main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production-api
+      url: https://${{ env.API_WEB_APP_NAME }}.azurewebsites.net
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build Shopping API Docker image
+        run: |
+          docker build \
+            --file Shopping.API/Dockerfile \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:latest \
+            Shopping.API
+
+      - name: Push Shopping API Docker image
+        run: |
+          docker push \
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
+
+          docker push \
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:latest
+
+      - name: Deploy Shopping API to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.API_WEB_APP_NAME }}
+          images: >-
+            ${{ env.ACR_LOGIN_SERVER }}/${{
+            env.API_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Show Shopping API container configuration
+        run: |
+          az webapp config container show \
+            --name ${{ env.API_WEB_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+
+      - name: Restart Shopping API Web App
+        run: |
+          az webapp restart \
+            --name ${{ env.API_WEB_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+
+      - name: Log out from Azure
+        if: always()
+        run: az logout
+
+  # =====================================================
+  # CD - Build and deploy Shopping.Client
+  # =====================================================
+  deploy-client:
+    name: Deploy Shopping Client
+    runs-on: ubuntu-latest
+
+    needs:
+      - build-api
+      - build-client
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production-client
+      url: https://${{ env.CLIENT_WEB_APP_NAME }}.azurewebsites.net
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build Shopping Client Docker image
+        run: |
+          docker build \
+            --file Shopping.Client/Dockerfile \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.CLIENT_IMAGE_NAME }}:${{ github.sha }} \
+            --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.CLIENT_IMAGE_NAME }}:latest \
+            Shopping.Client
+
+      - name: Push Shopping Client Docker image
+        run: |
+          docker push \
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.CLIENT_IMAGE_NAME }}:${{ github.sha }}
+
+          docker push \
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.CLIENT_IMAGE_NAME }}:latest
+
+      - name: Deploy Shopping Client to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.CLIENT_WEB_APP_NAME }}
+          images: >-
+            ${{ env.ACR_LOGIN_SERVER }}/${{
+            env.CLIENT_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Show Shopping Client container configuration
+        run: |
+          az webapp config container show \
+            --name ${{ env.CLIENT_WEB_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+
+      - name: Restart Shopping Client Web App
+        run: |
+          az webapp restart \
+            --name ${{ env.CLIENT_WEB_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }}
+
+      - name: Log out from Azure
+        if: always()
+        run: az logout  
