@@ -83,7 +83,7 @@ jobs:
 
       - name: Build Shopping Client
         run: |
-          dotnet build Shopping.Client/Shopping.Client.csproj \
+          dotnet build Shopping/Shopping.Client/Shopping.Client.csproj \
             --configuration Release \
             --no-restore
 
