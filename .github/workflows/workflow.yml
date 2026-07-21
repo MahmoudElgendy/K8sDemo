@@ -197,7 +197,7 @@ jobs:
         run: az logout
 
   # =====================================================
-  # CD - Build and deploy Shopping.Client
+  # CD - Build and deploy Shopping.Client .
   # =====================================================
   deploy-client:
     name: Deploy Shopping Client
