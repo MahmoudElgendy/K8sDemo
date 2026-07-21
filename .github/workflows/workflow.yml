@@ -51,11 +51,11 @@ jobs:
         run: dotnet --info
 
       - name: Restore Shopping API
-        run: dotnet restore Shopping.API/Shopping.API.csproj
+        run: dotnet restore /Shopping/Shopping.API/Shopping.API.csproj
 
       - name: Build Shopping API
         run: |
-          dotnet build Shopping.API/Shopping.API.csproj \
+          dotnet build Shopping/Shopping.API/Shopping.API.csproj \
             --configuration Release \
             --no-restore
 
