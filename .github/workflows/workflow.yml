@@ -51,7 +51,7 @@ jobs:
         run: dotnet --info
 
       - name: Restore Shopping API
-        run: dotnet restore /Shopping/Shopping.API/Shopping.API.csproj
+        run: dotnet restore Shopping/Shopping.API/Shopping.API.csproj
 
       - name: Build Shopping API
         run: |
@@ -79,7 +79,7 @@ jobs:
         run: dotnet --info
 
       - name: Restore Shopping Client
-        run: dotnet restore Shopping.Client/Shopping.Client.csproj
+        run: dotnet restore Shopping/Shopping.Client/Shopping.Client.csproj
 
       - name: Build Shopping Client
         run: |
