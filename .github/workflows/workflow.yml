@@ -159,10 +159,11 @@ jobs:
       - name: Build Shopping API Docker image
         run: |
           docker build \
-            --file Shopping.API/Dockerfile \
+            --file Shopping/Shopping.API/Dockerfile \
             --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
             --tag ${{ env.ACR_LOGIN_SERVER }}/${{ env.API_IMAGE_NAME }}:latest \
-            Shopping.API
+            Shopping
+       
 
       - name: Push Shopping API Docker image
         run: |
