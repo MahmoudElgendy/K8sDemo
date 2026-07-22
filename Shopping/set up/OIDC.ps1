@@ -32,4 +32,4 @@ az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --as
 
 az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --assignee-principal-type ServicePrincipal --role "Contributor" --scope $RESOURCE_GROUP_ID
 
-$WEB_APP_PRINCIPAL_ID = az webapp identity assign --name $API_WEB_APP_NAME --resource-group $RESOURCE_GROUP --query principalId --output tsv
+$WEB_APP_PRINCIPAL_ID = az webapp identity assign --name $API_WEB_APP_NAME --resource-group $RESOURCE_GROUP --query principalId --output tsv.
