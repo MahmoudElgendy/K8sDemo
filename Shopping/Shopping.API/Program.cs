@@ -20,11 +20,22 @@ namespace Shopping.API
                         builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
-            using (var scope = app.Services.CreateScope())
+            try
             {
+                using var scope = app.Services.CreateScope();
+
                 var dbContext = scope.ServiceProvider.GetRequiredService<ProductContext>();
 
                 dbContext.Database.Migrate();
+
+                Console.WriteLine("Database migration completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Database migration failed:");
+                Console.WriteLine(ex);
+
+                throw;
             }
 
             // Configure the HTTP request pipeline.
