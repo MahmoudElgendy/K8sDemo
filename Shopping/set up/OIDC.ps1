@@ -31,7 +31,8 @@ $SERVICE_PRINCIPAL_OBJECT_ID = az ad sp show --id $APP_ID --query id --output ts
 # Create GitHub OIDC federated credential
 # ============================================================
 
-az ad app federated-credential create --id $APP_ID --parameters federated-credential.json
+az ad app federated-credential create --id $APP_ID --parameters federated-credential_api.json
+az ad app federated-credential create --id $APP_ID --parameters federated-credential_client.json
 
 # ============================================================
 # Get Azure resource IDs
