@@ -67,7 +67,7 @@ az role assignment create --assignee-object-id $CLIENT_WEB_APP_PRINCIPAL_ID --as
 
 # ============================================================
 # Display GitHub secret values
-# =============================================================
+# =============================================================+
 
 Write-Host ""
 Write-Host "Add these values to GitHub repository secrets:"
