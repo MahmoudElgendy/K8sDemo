@@ -26,7 +26,7 @@ $SUBSCRIPTION_ID = az account show --query id --output tsv
 $APP_ID = az ad app create --display-name $APP_NAME --query appId --output tsv
 az ad sp create --id $APP_ID
 $SERVICE_PRINCIPAL_OBJECT_ID = az ad sp show --id $APP_ID --query id --output tsv
-
+$KEY_VAULT_ID = az keyvault show --name geeks-kv-2026 --resource-group geeks-rg --query id --output tsv
 # ============================================================
 # Create GitHub OIDC federated credential
 # ============================================================
@@ -48,6 +48,7 @@ $CLIENT_WEB_APP_ID = az webapp show --name $CLIENT_WEB_APP_NAME --resource-group
 # ============================================================
 
 az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --assignee-principal-type ServicePrincipal --role "AcrPush" --scope $ACR_ID
+az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --assignee-principal-type ServicePrincipal --role "Key Vault Secrets User" --scope $KEY_VAULT_ID
 az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --assignee-principal-type ServicePrincipal --role "Website Contributor" --scope $API_WEB_APP_ID
 az role assignment create --assignee-object-id $SERVICE_PRINCIPAL_OBJECT_ID --assignee-principal-type ServicePrincipal --role "Website Contributor" --scope $CLIENT_WEB_APP_ID
 
@@ -74,3 +75,5 @@ Write-Host "Add these values to GitHub repository secrets:"
 Write-Host "AZURE_CLIENT_ID=$APP_ID"
 Write-Host "AZURE_TENANT_ID=$TENANT_ID"
 Write-Host "AZURE_SUBSCRIPTION_ID=$SUBSCRIPTION_ID"
+
+

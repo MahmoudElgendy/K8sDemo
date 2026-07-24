@@ -122,7 +122,106 @@ jobs:
   #           --configuration Release \
   #           --no-build \
   #           --verbosity normal
+ 
+  # =====================================================
+  # CD - Apply EF Core migrations to Azure SQL
+  # =====================================================
+  migrate-database:
+    name: Migrate Production Database
+    runs-on: ubuntu-latest
 
+    needs:
+      - build-api
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production-database
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Log in to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Restore Shopping API
+        run: |
+          dotnet restore \
+            Shopping/Shopping.API/Shopping.API.csproj
+
+      - name: Build EF migration bundle
+        run: |
+          dotnet ef migrations bundle \
+            --project Shopping/Shopping.API/Shopping.API.csproj \
+            --startup-project Shopping/Shopping.API/Shopping.API.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained \
+            --output ./efbundle
+
+      - name: Get database connection string from Key Vault
+        id: database-secret
+        shell: bash
+        run: |
+          CONNECTION_STRING=$(az keyvault secret show \
+            --vault-name geeks-kv-2026 \
+            --name DefaultConnection \
+            --query value \
+            --output tsv)
+
+          echo "::add-mask::$CONNECTION_STRING"
+          echo "connection_string=$CONNECTION_STRING" >> "$GITHUB_OUTPUT"
+
+      - name: Get GitHub runner public IP
+        id: runner-ip
+        shell: bash
+        run: |
+          RUNNER_IP=$(curl --silent https://api.ipify.org)
+
+          echo "runner_ip=$RUNNER_IP" >> "$GITHUB_OUTPUT"
+
+      - name: Temporarily allow runner through SQL firewall
+        run: |
+          az sql server firewall-rule create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server geeks-sql-server-2026 \
+            --name GitHubActions-${{ github.run_id }} \
+            --start-ip-address ${{ steps.runner-ip.outputs.runner_ip }} \
+            --end-ip-address ${{ steps.runner-ip.outputs.runner_ip }}
+
+      - name: Apply EF Core migrations
+        run: |
+          chmod +x ./efbundle
+
+          ./efbundle \
+            --connection '${{ steps.database-secret.outputs.connection_string }}'
+
+      - name: Remove temporary SQL firewall rule
+        if: always()
+        run: |
+          az sql server firewall-rule delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server geeks-sql-server-2026 \
+            --name GitHubActions-${{ github.run_id }} \
+            --yes || true
+
+      - name: Log out from Azure
+        if: always()
+        run: az logout
+ 
   # =====================================================
   # CD - Build and deploy Shopping.API
   # =====================================================
@@ -132,7 +231,7 @@ jobs:
 
     needs:
       - build-api
-      - build-client
+      - migrate-database
 
     # Pull requests run CI only.
     # Deployment happens only after a push to main.
@@ -205,7 +304,6 @@ jobs:
     runs-on: ubuntu-latest
 
     needs:
-      - build-api
       - build-client
 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
